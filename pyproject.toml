@@ -29,14 +29,14 @@ s2yt_ytoauth = "spotify2ytmusic.cli:ytoauth"
 [tool.briefcase]
 project_name = "Spotify2YTMusic"
 bundle = "com.linsomniac"
-version = "0.1"
+version = "0.1.0"
 license = "CC0-1.0"
 
 [tool.briefcase.app.spotify2ytmusic]
 formal_name = "Spotify2YTMusic"
 description = "A tool for helping to convert Spotify playlists to YouTube Music"
-sources = ['spotify2ytmusic']
+sources = ["spotify2ytmusic"]
+entry_point = "spotify2ytmusic.gui:main"
 requires = [
-  'ytmusicapi',
-  'tk',
+  "ytmusicapi",
 ]
