@@ -1,48 +1,27 @@
-name: Build with Briefcase
+- name: Build with Briefcase
+  shell: pwsh
+  run: |
+    $ErrorActionPreference = "Stop"
 
-on:
-  release:
-    types: [released]
-  push:
-    branches:
-      - main
+    python -m briefcase create windows -v
+    if ($LASTEXITCODE -ne 0) {
+      Write-Host "Briefcase create failed"
+      Get-ChildItem -Path . -Recurse -Filter "briefcase*.log" -ErrorAction SilentlyContinue |
+        ForEach-Object {
+          Write-Host "`n===== $($_.FullName) ====="
+          Get-Content $_.FullName
+        }
+      exit $LASTEXITCODE
+    }
 
-permissions:
-  contents: write
+    python -m briefcase build windows -v
+    if ($LASTEXITCODE -ne 0) {
+      Write-Host "Briefcase build failed"
+      exit $LASTEXITCODE
+    }
 
-jobs:
-  build-and-upload:
-    runs-on: windows-latest
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.x'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install briefcase
-
-    - name: Update Application Version
-      if: github.event_name == 'release' && github.event.action == 'released'
-      run: |
-        (Get-Content pyproject.toml) -replace 'version = ".*"', 'version = "${{ github.ref_name }}"' | Set-Content pyproject.toml
-      shell: pwsh
-
-    - name: Build with Briefcase
-      run: briefcase create windows && briefcase build windows && briefcase package windows
-
-    - name: Upload Release Asset
-      uses: softprops/action-gh-release@v2
-      if: github.event_name == 'release' && github.event.action == 'released'
-      with:
-        files: dist/*.msi
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-#  If I try pyinstaller I need to use "--collect-all ytmusicapi"
-#  https://ytmusicapi.readthedocs.io/en/stable/faq.html#how-do-i-package-ytmusicapi-with-pyinstaller
+    python -m briefcase package windows -v
+    if ($LASTEXITCODE -ne 0) {
+      Write-Host "Briefcase package failed"
+      exit $LASTEXITCODE
+    }
